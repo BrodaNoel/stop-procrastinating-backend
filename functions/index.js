@@ -49,6 +49,37 @@ app.post('/sites/report', (req, res) => {
   }
 });
 
+app.get('/moderation/pendings', (req, res) => {
+  try {
+    let ref = admin.database().ref(`/reported/domains`).orderByKey().limitToFirst(1);
+
+    ref.once('value').then(domain => {
+      const key = Object.keys(domain.val())[0];
+
+      let data = {
+        domain: {}
+      };
+
+      data.domain[key.replace(/\+/g, '.')] = domain.val()[key];
+
+      res.send({
+        status: 'ok',
+        data
+      });
+    });
+
+  } catch (e) {
+    res.send({
+      status: 'error',
+      error: {
+        id: 'moderation/pendings',
+        message: 'Pendings can not be get',
+        native: e.message
+      }
+    });
+  }
+});
+
 app.post('/moderation/save', (req, res) => {
   try {
     if (typeof req.body.domain === 'string' && req.body.domain.length > 0) {
