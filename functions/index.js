@@ -49,4 +49,42 @@ app.post('/sites/report', (req, res) => {
   }
 });
 
+app.post('/moderation/save', (req, res) => {
+  try {
+    if (typeof req.body.domain === 'string' && req.body.domain.length > 0) {
+      const domain = req.body.domain.replace(/\./g, '+');
+      // "." are not allowed.
+      // https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references
+      // So, replace the `.` (in the domain) for `+`
+      admin.database().ref(`/rules/domains`).child(domain).child(`/rules`).push({
+        url: req.body.url,
+        selector: req.body.selector
+      });
+
+      res.send({
+        status: 'ok'
+      });
+
+    } else {
+      res.send({
+        status: 'error',
+        error: {
+          id: 'moderation/save',
+          message: 'Invalid URL'
+        }
+      });
+    }
+
+  } catch (e) {
+    res.send({
+      status: 'error',
+      error: {
+        id: 'moderation/save',
+        message: 'URL can not be reported',
+        native: e.message
+      }
+    });
+  }
+});
+
 exports.api = functions.https.onRequest(app);
