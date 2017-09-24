@@ -21,7 +21,7 @@ app.post('/sites/report', (req, res) => {
       // https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references
       // So, replace the `.` (in the domain) for `+`
       const domain = url.hostname.replace(/\./g, '+');
-      admin.database().ref(`/domains`).child(domain).child(`reported/urls`).push(url.href);
+      admin.database().ref(`/reported/domains`).child(domain).child(`/urls`).push(url.href);
 
       res.send({
         status: 'ok'
