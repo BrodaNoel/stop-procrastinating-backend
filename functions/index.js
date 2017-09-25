@@ -118,4 +118,28 @@ app.post('/moderation/save', (req, res) => {
   }
 });
 
+app.post('/moderation/remove', (req, res) => {
+  try {
+    const domain = req.body.domain.replace(/\./g, '+');
+    // "." are not allowed.
+    // https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references
+    // So, replace the `.` (in the domain) for `+`
+    admin.database().ref(`/reported/domains`).child(domain).child(`/urls`).child(req.body.urlId).remove();
+
+    res.send({
+      status: 'ok'
+    });
+
+  } catch (e) {
+    res.send({
+      status: 'error',
+      error: {
+        id: 'moderation/save',
+        message: 'URL can not be reported',
+        native: e.message
+      }
+    });
+  }
+});
+
 exports.api = functions.https.onRequest(app);
