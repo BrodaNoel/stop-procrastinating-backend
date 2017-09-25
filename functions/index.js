@@ -49,22 +49,31 @@ app.post('/sites/report', (req, res) => {
   }
 });
 
-app.get('/moderation/pendings', (req, res) => {
+app.get('/moderation/pending', (req, res) => {
   try {
-    let ref = admin.database().ref(`/reported/domains`).orderByKey().limitToFirst(1);
+    let pendingRef = admin.database().ref(`/reported/domains`).orderByKey().limitToFirst(1);
 
-    ref.once('value').then(domain => {
+    pendingRef.once('value').then(domain => {
       const key = Object.keys(domain.val())[0];
 
       let data = {
-        domain: {}
+        domain: {
+          name: key.replace(/\+/g, '.'),
+          rules: {
+            pending: domain.val()[key].urls
+          }
+        }
       };
 
-      data.domain[key.replace(/\+/g, '.')] = domain.val()[key];
+      let rulesRef = admin.database().ref(`/rules/domains`).child(key).child('/rules');
 
-      res.send({
-        status: 'ok',
-        data
+      rulesRef.once('value').then(rules => {
+        data.domain.rules.current = rules.val();
+
+        res.send({
+          status: 'ok',
+          data
+        });
       });
     });
 
