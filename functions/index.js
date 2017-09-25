@@ -143,8 +143,8 @@ app.post('/moderation/remove', (req, res) => {
     res.send({
       status: 'error',
       error: {
-        id: 'moderation/save',
-        message: 'URL can not be reported',
+        id: 'moderation/remove',
+        message: 'URL can not be removed',
         native: e.message
       }
     });
