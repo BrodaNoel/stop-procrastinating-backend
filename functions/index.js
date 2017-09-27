@@ -54,6 +54,14 @@ app.get('/moderation/pending', (req, res) => {
     let pendingRef = admin.database().ref(`/reported/domains`).orderByKey().limitToFirst(1);
 
     pendingRef.once('value').then(domain => {
+      if (domain.val() === null) {
+        res.send({
+          status: 'ok',
+          data: { domain: {} }
+        });
+        return;
+      }
+
       const key = Object.keys(domain.val())[0];
 
       let data = {
@@ -68,12 +76,13 @@ app.get('/moderation/pending', (req, res) => {
       let rulesRef = admin.database().ref(`/rules/domains`).child(key).child('/rules');
 
       rulesRef.once('value').then(rules => {
-        data.domain.rules.current = rules.val();
+        data.domain.rules.current = rules.val() || {};
 
         res.send({
           status: 'ok',
           data
         });
+        return;
       });
     });
 
