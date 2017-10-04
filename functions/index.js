@@ -8,6 +8,14 @@ const app = express();
 app.use(cors);
 const URL = require('url');
 
+const toBase64 = text => {
+  return new Buffer(text).toString('base64');
+};
+
+const fromBase64 = base64 => {
+  return new Buffer(base64, 'base64').toString('ascii');
+};
+
 // Response Example
 // Error: { status: 'error', error: { id: 'xxx/yyy', message: 'Everything is broken!' } }
 // Success: { status: 'ok'[, data: <Mixed>] }
@@ -104,13 +112,19 @@ app.post('/moderation/save', (req, res) => {
     if (typeof req.body.domain === 'string' && req.body.domain.length > 0) {
       const domain = req.body.domain.replace(/\./g, '+');
       const subDomain = req.body.subDomain.replace(/\./g, '+');
-      const path = req.body.path;
+      const path = toBase64(req.body.path);
       const selector = req.body.selector;
 
       // "." are not allowed.
       // https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references
       // So, replace the `.` (in the domain) for `+`
-      admin.database().ref(`/rules/domains`).child(domain).child(subDomain).child(path).push(selector);
+      admin.database()
+        .ref(`/rules/domains`)
+        .child(domain)
+        .child('/subDomains')
+        .child(subDomain)
+        .child(path)
+        .push(selector);
 
       res.send({
         status: 'ok'
