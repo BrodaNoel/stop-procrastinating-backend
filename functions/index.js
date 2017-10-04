@@ -100,15 +100,17 @@ app.get('/moderation/pending', (req, res) => {
 
 app.post('/moderation/save', (req, res) => {
   try {
+    // TODO: Add more validations here.
     if (typeof req.body.domain === 'string' && req.body.domain.length > 0) {
       const domain = req.body.domain.replace(/\./g, '+');
+      const subDomain = req.body.subDomain.replace(/\./g, '+');
+      const path = req.body.path;
+      const selector = req.body.selector;
+
       // "." are not allowed.
       // https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references
       // So, replace the `.` (in the domain) for `+`
-      admin.database().ref(`/rules/domains`).child(domain).child(`/rules`).push({
-        url: req.body.url,
-        selector: req.body.selector
-      });
+      admin.database().ref(`/rules/domains`).child(domain).child(subDomain).child(path).push(selector);
 
       res.send({
         status: 'ok'
