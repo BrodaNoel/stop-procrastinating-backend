@@ -176,4 +176,68 @@ app.post('/moderation/remove', (req, res) => {
   }
 });
 
+app.post('/rules/generateFile', (req, res) => {
+  try {
+    let data = {
+      "expire": 5,
+      "schemaVersion": 1,
+      "generics": [],
+      "domains": {}
+    };
+
+    let rulesRef = admin.database().ref(`/rules`);
+
+    rulesRef.once('value').then(rules => {
+      const domains = rules.val().domains;
+
+      Object.keys(domains).forEach(domainKey => {
+        const domain = domainKey.replace(/\+/g, '.');
+
+        if (!data.domains[domain]) {
+          data.domains[domain] = {
+            subDomains: {}
+          };
+        }
+
+        if (domains[domainKey].disabled) {
+          data.domains[domain].disabled = true;
+        }
+
+        const subDomains = domains[domainKey].subDomains;
+        Object.keys(subDomains).forEach(subDomainKey => {
+          const subDomain = subDomainKey.replace(/\+/g, '.');
+
+          if (!data.domains[domain].subDomains[subDomain]) {
+            data.domains[domain].subDomains[subDomain] = {};
+          }
+
+          const paths = subDomains[subDomainKey];
+
+          Object.keys(paths).forEach(pathKey => {
+            const path = fromBase64(pathKey);
+            const selectorsObject = subDomains[subDomainKey][pathKey];
+            const selectors = Object.keys(selectorsObject).map(x => selectorsObject[x]);
+            data.domains[domain].subDomains[subDomain][path] = selectors;
+          });
+        });
+      });
+
+      res.send({
+        status: 'ok',
+        data
+      });
+    });
+
+  } catch (e) {
+    res.send({
+      status: 'error',
+      error: {
+        id: 'rules/generateFile',
+        message: 'File can not be generated',
+        native: e.message
+      }
+    });
+  }
+});
+
 exports.api = functions.https.onRequest(app);
